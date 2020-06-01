@@ -1,0 +1,9 @@
+# Ignore everything except specified directories
+/*
+!/.vscode
+!/Assets
+!/Packages
+!/ProjectSettings
+!.gitignore
+!LICENSE
+!README.md
