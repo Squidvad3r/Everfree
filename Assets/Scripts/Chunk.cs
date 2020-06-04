@@ -46,7 +46,7 @@ public class Chunk
 
         meshRenderer.material = world.material;
         chunkObject.transform.SetParent(world.transform);
-        chunkObject.transform.position = new Vector2(coord.x * VoxelData.chunkWidth, coord.z * VoxelData.chunkWidth);
+        chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0, coord.z * VoxelData.chunkWidth);
         chunkObject.name = "Chunk " + coord.x + ", " + coord.z;
 
         PopulateVoxelMap();
@@ -76,7 +76,10 @@ public class Chunk
             {
                 for(int z = 0; z < VoxelData.chunkWidth; z++)
                 {
-                    AddVoxelDataToChunk(new Vector3(x, y, z));
+                    if(world.blockTypes[voxelMap[x, y, z]].isSolid)
+                    {
+                        AddVoxelDataToChunk(new Vector3(x, y, z));
+                    }
                 }
             }
         }

@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+    public int seed;
+    public BiomeAttributes biome;
     public Transform player;
     public Vector3 spawnPos;
     public Material material;
@@ -16,6 +18,8 @@ public class World : MonoBehaviour
 
     private void Start()
     {
+        Random.InitState(seed);
+
         spawnPos = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f,
                                 VoxelData.chunkHeight + 2f,
                                 (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
@@ -129,27 +133,62 @@ public class World : MonoBehaviour
 
     public int GetVoxel(Vector3 pos)
     {
+        int yPos = Mathf.FloorToInt(pos.y);
+
+        /* Immutable Pass */
+
+        // If outside world, make it air.
         if(!IsVoxelInWorld(pos))
         {
             return 0;
         }
 
-        if(pos.y < 1)
-        {
-            return 4;
-        }
-        else if(pos.y >= VoxelData.worldSizeInVoxels - 4 && pos.y != VoxelData.worldSizeInVoxels - 1)
-        {
-            return 3;
-        }
-        else if(pos.y == VoxelData.worldSizeInVoxels - 1)
-        {
-            return 2;
-        }
-        else
+        // If bottom block, make it bedrock.
+        if(yPos == 0)
         {
             return 1;
         }
+
+        /* Basic Terrain Pass */
+
+        int terrainHeight = Mathf.FloorToInt(biome.terrainHeight * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale))
+                            + biome.solidGroundHeight;
+        int voxelValue = 0;
+
+        if(yPos == terrainHeight)
+        {
+            voxelValue = 2;
+        }
+        else if(yPos < terrainHeight && yPos >= terrainHeight - 4)
+        {
+            voxelValue = 3;
+        }
+        else if(yPos > terrainHeight)
+        {
+            return 0;
+        }
+        else
+        {
+            voxelValue = 1;
+        }
+
+        /* Second Pass */
+
+        if(voxelValue == 1 || voxelValue == 2 || voxelValue == 3)
+        {
+            foreach(Lode lode in biome.lodes)
+            {
+                if(yPos > lode.minHeight && yPos < lode.maxHeight)
+                {
+                    if(Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
+                    {
+                        voxelValue = lode.blockID;
+                    }
+                }
+            }
+        }
+        
+        return voxelValue;
     }
 }
 

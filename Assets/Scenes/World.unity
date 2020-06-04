@@ -164,7 +164,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc45255ec9348174ca3e766474ccae70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  seed: 135263
+  biome: {fileID: 11400000, guid: fbd2fc6dab70a64439932688917f27c7, type: 2}
   player: {fileID: 2013107128}
+  spawnPos: {x: 0, y: 0, z: 0}
   material: {fileID: 2100000, guid: 8bad25a578a3ae546999c2ee61f33d09, type: 2}
   blockTypes:
   - blockName: air
