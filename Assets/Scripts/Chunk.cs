@@ -5,6 +5,7 @@ using UnityEngine;
 public class Chunk
 {
     public ChunkCoord coord;
+    public int[,,] voxelMap = new int[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
 
     GameObject chunkObject;
     MeshRenderer meshRenderer;
@@ -14,17 +15,22 @@ public class Chunk
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
     List<Vector2> uvs = new List<Vector2>();
-    int[,,] voxelMap = new int[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
+
+    private bool _isLoaded;
+    public bool isVoxelMapPopulated = false;
 
     public bool isLoaded
     {
         get
         {
-            return chunkObject.activeSelf;
+            return _isLoaded;
         }
         set
         {
-            chunkObject.SetActive(value);
+            _isLoaded = value;
+            
+            if(chunkObject != null)
+                chunkObject.SetActive(value);
         }
     }
 
@@ -36,10 +42,18 @@ public class Chunk
         }
     }
 
-    public Chunk(ChunkCoord _coord, World _world)
+    public Chunk(ChunkCoord _coord, World _world, bool generateOnLoad)
     {
         world = _world;
         coord = _coord;
+        isLoaded = true;
+        
+        if(generateOnLoad)
+            Init();
+    }
+
+    public void Init()
+    {
         chunkObject = new GameObject();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
         meshFilter = chunkObject.AddComponent<MeshFilter>();
@@ -66,6 +80,8 @@ public class Chunk
                 }
             }
         }
+
+        isVoxelMapPopulated = true;
     }
 
     void CreateMeshData()
@@ -97,6 +113,18 @@ public class Chunk
         }
     }
 
+    public int GetVoxelFromGlobalPos(Vector3 pos)
+    {
+        int x = Mathf.FloorToInt(pos.x);
+        int y = Mathf.FloorToInt(pos.y);
+        int z = Mathf.FloorToInt(pos.z);
+
+        x -= Mathf.FloorToInt(chunkObject.transform.position.x);
+        z -= Mathf.FloorToInt(chunkObject.transform.position.z);
+
+        return voxelMap[x, y, z];
+    }
+
     bool CheckVoxel(Vector3 pos)
     {
         int x = Mathf.FloorToInt(pos.x);
@@ -105,7 +133,7 @@ public class Chunk
 
         if(!IsVoxelInChunk(x, y, z))
         {
-            return world.blockTypes[world.GetVoxel(pos + position)].isSolid;
+            return world.CheckForVoxel(pos + position);
         }
 
         return world.blockTypes[voxelMap[x, y, z]].isSolid;
@@ -173,10 +201,25 @@ public class ChunkCoord
     public int x;
     public int z;
 
+    public ChunkCoord()
+    {
+        x = 0;
+        z = 0;
+    }
+
     public ChunkCoord(int _x, int _z)
     {
         x = _x;
         z = _z;
+    }
+
+    public ChunkCoord(Vector3 pos)
+    {
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        x = xCheck / VoxelData.chunkWidth;
+        z = zCheck / VoxelData.chunkWidth;
     }
 
     public bool Equals(ChunkCoord otherChunk)
